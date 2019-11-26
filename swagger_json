@@ -1,0 +1,90 @@
+//預計會產生的json範例
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "api文件敘述",
+    "version": "1.0.0",
+    "title": "api文件標題"
+  },
+  "host": "網址",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "使用者相關",
+      "description": "使用者相關"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/api/login": {
+      "get": {
+        "tags": [
+          "使用者相關"
+        ],
+        "summary": "登入",
+        "description": "登入",
+        "parameters": [
+          {
+            "name": "account",
+            "required": true,
+            "type": "string",
+            "description": "帳號",
+            "in": "query"
+          },
+          {
+            "name": "password",
+            "required": true,
+            "type": "string",
+            "description": "密碼",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "呼叫成功",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "執行代碼",
+                  "example": "0"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "回傳訊息",
+                  "example": "成功"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "token",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NjUxNjQ0MTEsImp0aSI6MTV9.8zoyPSqMXS5gbUL1dxv7N7oNRMLltpNFfdrPafkH5KA"
+                    }
+                  }
+                },
+                "pagination": {
+                  "type": "string",
+                  "description": "分頁器內容",
+                  "example": ""
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}
