@@ -1,0 +1,250 @@
+<?php
+/**
+ * swagger api服務文件使用
+ */
+
+
+namespace App\Http\Services;
+
+use App\Http\Traits\RouterTrait;
+
+class SwaggerServices
+{
+    use RouterTrait;
+    /**
+     * 建立 api 文件 json 字串
+     */
+    function buildApiDocJson($routeName)
+    {
+
+        $apiParameterInfo    = config($routeName . 'ParameterInfo');
+        $data                = $apiParameterInfo['info'];
+        $data['host']        = request()->getHttpHost();
+        $data['basePath']    = "/";
+        $data['paths']       = $this->buildPaths($apiParameterInfo);
+        $data['definitions'] = $apiParameterInfo['definitions'];
+        return json_encode($data);
+    }
+
+    /**
+     * 組 paths 資料
+     * @param $routeName
+     * @return array
+     */
+    private function buildPaths($apiParameterInfo)
+    {
+        // 取得所有路由名稱tag
+        $tags = $this->buildTags($apiParameterInfo["info"]["tags"]);
+        $security = $this->buildSecuritys($apiParameterInfo["info"]["securityDefinitions"]);
+
+        $routeNames = $apiParameterInfo['routeName'];
+        $returnData = [];
+        foreach ($routeNames as $routeName => $data) {
+            $tmpData          = [];
+            $method           = $this->getMethodByRouteName($routeName);
+            $method           = strtolower($method);
+            $url              = route($routeName, [], false);
+            $response         = (isset($data['response'])) ? $data['response'] : "";
+            $verify           = (isset($data['verify'])) ? $data['verify'] : "";
+            $tmpData          = [
+                $method => [
+                    "tags"        => $tags[$routeName],
+                    "summary"     => $data['summary'],
+                    "description" => $data['description'],
+                    "parameters"  => $this->buildParameters($verify),
+                    "responses"   => $this->buildResponse($response),
+                    "security"    => (isset($security[$routeName])) ? $security[$routeName]: [],
+                ]
+            ];
+            $returnData[$url] = $tmpData;
+        }
+        return $returnData;
+    }
+
+    /**
+     * 建立參數內容
+     */
+    private function buildParameters($verifyData)
+    {
+
+        $parameters = [];
+
+        if (isset($verifyData['rules'])) {
+
+            foreach ($verifyData['rules'] as $parameterName => $value) {
+                $tmpData   = [];
+                $ruleArrey = explode("|", $value);
+                $tmpData   = [
+                    "name"        => $parameterName,
+                    "required"    => (in_array("required", $ruleArrey)) ? true : false,
+                    "type"        => (in_array("integer", $ruleArrey)) ? "integer" : "string",
+                    "description" => (isset($verifyData['description'][$parameterName])) ? $verifyData['description'][$parameterName] : "",
+                    "in"          => "query",
+                ];
+
+                $parameters[] = $tmpData;
+            }
+        }
+        return $parameters;
+
+    }
+
+    /**
+     * 建立路由api文件分類
+     * @param $tags
+     * @return array
+     */
+    private function buildTags($tags)
+    {
+        $returnTags = [];
+        foreach ($tags as $value) {
+
+            foreach ($value['routeNames'] as $routeName) {
+                $returnTags[$routeName] = [$value['name']];
+            }
+        }
+        return $returnTags;
+    }
+
+    /**
+     * 建立回應文件內容
+     * @param $response
+     * @return array
+     */
+    private function buildResponse($response)
+    {
+        $data = [
+            "200" => [
+                "description" => "呼叫成功",
+                "schema"      => [
+                    "type"       => "object",
+                    "properties" => [
+                        "code"       => [
+                            "type"        => "string",
+                            "description" => "執行代碼",
+                            "example"     => "0"
+                        ],
+                        "message"    => [
+                            "type"        => "string",
+                            "description" => "回傳訊息",
+                            "example"     => "成功"
+                        ],
+                        "data"       => $this->buildResponseData($response),
+                        "pagination" => $this->buildPagination($response),
+                    ],
+
+                ]
+            ],
+        ];
+
+        return $data;
+
+    }
+
+    /**
+     * 建立分頁資料
+     */
+    private function buildPagination($response)
+    {
+        $data = [
+            "type"        => "string",
+            "description" => "分頁器內容",
+            "example"     => ""
+        ];
+        if (isset($response['pagination'])) {
+            $data = [
+                "type"       => "object",
+                "properties" => [
+                    "current_page"  => [
+                        "type"        => "int",
+                        "description" => "目前頁面",
+                        "example"     => 1
+                    ],
+                    "from"          => [
+                        "type"        => "string",
+                        "description" => "從第幾筆開始",
+                        "example"     => "null"
+                    ],
+                    "last_page"     => [
+                        "type"        => "integer",
+                        "description" => "最後一頁",
+                        "example"     => 1
+                    ],
+                    "last_page_url" => [
+                        "type"        => "string",
+                        "description" => "最後一頁網址",
+                        "example"     => "http://tms.local/?page=1"
+                    ],
+                    "next_page_url" => [
+                        "type"        => "string",
+                        "description" => "下一頁網址",
+                        "example"     => "http://tms.local/?page=2"
+                    ],
+                    "path"          => [
+                        "type"        => "string",
+                        "description" => "路徑",
+                        "example"     => "http://tms.local/get"
+                    ],
+                    "per_page"      => [
+                        "type"        => "integer",
+                        "description" => "每頁筆數",
+                        "example"     => 1
+                    ],
+                    "prev_page_url" => [
+                        "type"        => "string",
+                        "description" => "上一頁網址",
+                        "example"     => "http://tms.local/?page=1"
+                    ],
+                    "to"            => [
+                        "type"        => "string",
+                        "description" => "to",
+                        "example"     => "null"
+                    ],
+                    "total"         => [
+                        "type"        => "integer",
+                        "description" => "總筆數",
+                        "example"     => 50
+                    ],
+                    "data"          => $response['pagination']
+                ],
+            ];
+        }
+        return $data;
+    }
+
+    /**
+     * 建立回傳資料
+     */
+    private function buildResponseData($response)
+    {
+        $data = [
+            "type"        => "string",
+            "description" => "回傳資料",
+            "example"     => ""
+        ];
+        if (isset($response['data'])) {
+            $data = $response['data'];
+        }
+        return $data;
+    }
+
+    /**
+     * 建立安全機制文件
+     * @param $securityDefinitions
+     * @return array
+     */
+    private function buildSecuritys($securityDefinitions)
+    {
+        $data = [];
+        foreach ($securityDefinitions as $key=>$value){
+            foreach ($value['routeName'] as $routeName){
+                $data[$routeName][]=[
+                    $key=>[]
+                ];
+            }
+        }
+        return $data ;
+    }
+
+
+}
