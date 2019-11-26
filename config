@@ -1,0 +1,87 @@
+ /********************************
+     * api文件資訊相關
+     *******************************/
+    /** api文件資訊 */
+    "info"             => [
+        "swagger"             => "2.0",
+        "info"                => [
+            "description" => "API文件敘述",
+            "version"     => "1.0.0",
+            "title"       => "API文件標題"
+        ],
+        "schemes"             => [
+            "http"
+        ],
+        "securityDefinitions" => [ //驗證
+            "api_key" => [
+                "type"      => "apiKey",
+                "name"      => "Authorization",
+                "in"        => "header",
+                "routeName" => [
+                    "api-sendActiveEmail",
+                    "api-addConsignment",
+                ],
+            ],
+        ],
+        "tags"                => [
+            [
+                "name"        => "使用者相關",
+                "description" => "使用者相關",
+                "routeNames"  => [
+                    "api-login",
+                ]
+            ],
+        ],
+    ],
+    /** api文件回應訊息定義 */
+    "definitions"      => [
+    ],
+    
+    /********************************
+     * 路由相關
+     *******************************/
+    "routeName"        => [
+        /********************************
+         * 使用者相關
+         *******************************/
+        /** 使用者註冊 */
+        "api-register"            => [ //路由名稱 驗證規則與api文件產生是使用路由名稱取得相對應的資料
+            "summary"     => "使用者註冊", //api文件 api名稱 
+            "description" => "使用者註冊", //api文件 api介紹 
+            "verify"      => [
+                "rules"       => [//laravel 驗證參數規則
+                    "account"  => "required|min:6|regex:/^[A-Za-z0-9]+$/",
+                    "password" => "required|min:8|regex:/^[A-Za-z0-9]+$/",
+                    "email"    => "required|email",
+                    "phone"    => "required|numeric|phone_number",
+                ],
+                "messages"    => [//laravel 驗證回應訊息
+                    "account.regex"  => "account只能為數字與英文",
+                    "password.regex" => "password只能為數字與英文",
+                ],
+                "description" => [
+                    "account"  => "帳號，限制使用英文與數字 最少需六個字",
+                    "password" => "密碼，限制使用英文與數字 最少需8個字",
+                    "email"    => "電子信箱",
+                    "phone"    => "電話"
+                ]
+            ],
+            'response'    => [//預計回應訊息格式
+                "data" => [
+                    "type"       => "object",
+                    "properties" => [
+                        "token"  => [
+                            "type"        => "string",
+                            "description" => "token",
+                            "example"     => "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NjUxNjQ0MTEsImp0aSI6MTV9.8zoyPSqMXS5gbUL1dxv7N7oNRMLltpNFfdrPafkH5KA"
+                        ],
+                        "callTo" => [
+                            "type"        => "string",
+                            "description" => "token",
+                            "example"     => "0987654321"
+                        ],
+                    ]
+                ],
+            ],
+
+        ],
